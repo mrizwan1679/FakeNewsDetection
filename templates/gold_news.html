@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gold News</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* Headline Ticker Styles */
+.ticker-container {
+    overflow: hidden;
+    position: relative;
+    white-space: nowrap;
+    border-radius: 5px;
+}
+
+.ticker {
+    display: inline-block;
+    padding-left: 100%;
+    animation: ticker-scroll 30s linear infinite;
+}
+
+.ticker-list {
+    display: flex;
+    list-style: none;
+}
+
+.ticker-item {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+@keyframes ticker-scroll {
+    0% {
+        transform: translateX(0%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+        .card:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        
+        .featured-article {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        
+        .dark-mode {
+            background-color: #121212 !important;
+            color: #ffffff !important;
+        }
+        .dark-mode .card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+        .dark-mode .form-control, 
+        .dark-mode .form-select, 
+        .dark-mode .btn-primary {
+            background-color: #333;
+            color: #fff;
+            border-color: #555;
+        }
+
+        
+        #loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        button.selected {
+    background-color: yellow;
+    border-radius: 50%;
+}
+    </style>
+</head>
+
+<body class="bg-light">
+
+    
+<!-- Spinner -->
+<div id="loading-spinner" class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+</div>
+
+<!-- Wrap all content -->
+<div id="main-content" style="display: none;">
+    <!-- Headline Ticker -->
+    <div class="ticker-container bg-dark text-white py-2 px-4 mb-4">
+        <div class="ticker">
+            <ul class="ticker-list m-0 p-0">
+                {% for headline in headlines %}
+                    <li class="ticker-item d-inline-block me-5">{{ headline }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-center flex-grow-1">Gold News</h1>
+            <button class="btn btn-dark ms-3" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+        </div>
+
+        <!-- Search Bar -->
+        <input type="text" id="search-bar" class="form-control mb-3" placeholder="Search for news..." oninput="filterNews()">
+
+        <!-- Category Dropdown -->
+        <div class="mb-4">
+            <select id="categoryDropdown" class="form-select w-25" onchange="filterCategoryDropdown()">
+                <option value="">All Categories</option>
+                <option value="price">Gold Price</option>
+                <option value="mining">Gold Mining</option>
+                <option value="market">Gold Market</option>
+            </select>
+        </div>
+
+        <!-- Sort Dropdown -->
+        <div class="d-flex justify-content-end mb-3">
+            <select id="sort-news" class="form-select w-auto" onchange="sortNews()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+            </select>
+        </div>
+
+        <!-- News Articles -->
+        <div id="news-container" class="row">
+            {% for article in news_articles %}
+            <div class="col-md-6 mb-4 news-card" style="display: none;">
+                <div class="card bg-dark text-white shadow-sm">
+                    <img src="{{ article.image_url }}" class="card-img-top" alt="News Image" style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ article.title }}</h5>
+                        <small class="card-date">{{ article.published_at }}</small>
+                        <p class="card-text">{{ article.description }}</p>
+                        <a href="{{ article.url }}" target="_blank" class="btn btn-primary">Read More</a>
+                        <small class="card-author">{{ article.author }}</small>
+
+                     
+                        
+                    </div>
+                    <button class="btn btn-warning mt-2"
+                        data-article-id="{{ article.id }}"
+                        data-title="{{ article.title }}"
+                        data-description="{{ article.description }}"
+                        data-image-url="{{ article.image_url }}"
+                        data-published-at="{{ article.published_at }}"
+                        data-url="{{ article.url }}"
+                        data-category="Gold"
+                        >
+                        Save to Favorites
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Load More Button -->
+        <div class="text-center mt-4">
+            <button class="btn btn-primary" id="load-more-btn" onclick="loadMoreNews()">Load More</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var currentArticleCount = 5; // Start with 5 articles
+
+function showArticles(count) {
+    var newsCards = document.getElementsByClassName("news-card");
+    for (var i = 0; i < newsCards.length; i++) {
+        if (i < count) {
+            newsCards[i].style.display = "block";
+        } else {
+            newsCards[i].style.display = "none";
+        }
+    }
+    if (count >= newsCards.length) {
+        document.getElementById("load-more-btn").style.display = "none";
+    }
+}
+
+function loadMoreNews() {
+    currentArticleCount += 5;
+    showArticles(currentArticleCount);
+}
+
+function filterNews() {
+    var input = document.getElementById("search-bar").value.toLowerCase();
+    var newsCards = document.getElementsByClassName("news-card");
+    for (var i = 0; i < newsCards.length; i++) {
+        var title = newsCards[i].getElementsByClassName("card-title")[0].innerText.toLowerCase();
+        var description = newsCards[i].getElementsByClassName("card-text")[0].innerText.toLowerCase();
+        
+        if (title.includes(input) || description.includes(input)) {
+            newsCards[i].style.display = "";
+        } else {
+            newsCards[i].style.display = "none";
+        }
+    }
+}
+
+function filterCategoryDropdown() {
+    var selectedCategory = document.getElementById("categoryDropdown").value.toLowerCase();
+    var newsCards = document.getElementsByClassName("news-card");
+
+    for (var i = 0; i < newsCards.length; i++) {
+        var description = newsCards[i].getElementsByClassName("card-text")[0].innerText.toLowerCase();
+        if (selectedCategory === "" || description.includes(selectedCategory)) {
+            newsCards[i].style.display = "";
+        } else {
+            newsCards[i].style.display = "none";
+        }
+    }
+}
+
+function sortNews() {
+    var sortOption = document.getElementById("sort-news").value;
+    var newsContainer = document.getElementById("news-container");
+    var newsCards = Array.from(newsContainer.getElementsByClassName("news-card"));
+
+    newsCards.sort(function(a, b) {
+        var dateA = new Date(a.querySelector(".card-date").innerText);
+        var dateB = new Date(b.querySelector(".card-date").innerText);
+
+        if (sortOption === "newest") {
+            return dateB - dateA;
+        } else {
+            return dateA - dateB;
+        }
+    });
+
+    newsCards.forEach(function(card) {
+        newsContainer.appendChild(card);
+    });
+}
+
+// Toggle Dark Mode
+function toggleDarkMode() {
+    document.body.classList.toggle("dark-mode");
+}
+
+// Auto Refresh every 5 minutes
+setInterval(function() {
+    location.reload();
+}, 300000); // 300,000 ms = 5 minutes
+
+// Show spinner first
+window.onload = function() {
+    document.getElementById("loading-spinner").style.display = "block";
+
+    setTimeout(function() {
+        document.getElementById("loading-spinner").style.display = "none";
+        document.getElementById("main-content").style.display = "block";
+        showArticles(currentArticleCount); // Show initial articles
+    }, 1000);
+};
+
+
+// Event delegation for all future "Add to Favorites" buttons
+document.addEventListener('click', function(event) {
+    // Check if the clicked element is an "Add to Favorites" button
+    if (event.target && event.target.classList.contains('btn-warning')) {
+        // Get all necessary attributes from the button
+        const articleId = event.target.getAttribute('data-article-id');
+        const title = event.target.getAttribute('data-title');
+        const description = event.target.getAttribute('data-description');
+        const imageUrl = event.target.getAttribute('data-image-url');  // New: Article image URL
+        const publishedAt = event.target.getAttribute('data-published-at');  // New: Published date
+        const url = event.target.getAttribute('data-url');  // New: Article URL
+        const category = event.target.getAttribute('data-category');
+        // Call saveToFavorites with the collected data
+        saveToFavorites(articleId, title, description, imageUrl, publishedAt, url);
+    }
+});
+
+function saveToFavorites(articleId, title, description, imageUrl, publishedAt, url,category) {
+    fetch('/save-favorite', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            article_id: articleId,
+            title: title, 
+            description: description,
+            image_url: imageUrl,   // Send image URL
+            published_at: publishedAt,   // Send published date
+            url: url,   // Send article URL
+            category: category
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            alert("Saved to Favorites!");
+        } else {
+            alert("Failed to save.");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+    });
+}
+
+</script>
+
+</body>
+</html>

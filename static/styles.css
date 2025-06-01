@@ -1,0 +1,65 @@
+/* Sidebar Styling */
+.sidebar {
+    width: 250px;
+    min-height: 100vh;
+  }
+  
+  .sidebar h3 {
+    font-weight: bold;
+  }
+  /* Sidebar Background Color */
+.bg-light-skyblue {
+    background-color: #87CEEB;
+  }
+  
+  
+  .sidebar ul li a {
+    font-size: 16px;
+    padding: 10px 15px;
+    display: block;
+    transition: background 0.3s ease;
+  }
+  
+  .sidebar ul li a:hover,
+  .sidebar ul li a.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+  }
+  
+  /* Main Content Styling */
+  .main-content {
+    background-color: #f8f9fa;
+  }
+  
+  /* Top Bar Styling */
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 10px 15px;
+  }
+  
+  .top-bar .btn-primary {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+  
+  /* Card Styling */
+  .card {
+    border-radius: 10px;
+  }
+  
+  .card .card-header {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .card .card-body {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+  }
+  

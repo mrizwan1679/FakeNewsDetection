@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #8fd3ff;
+            padding: 15px 20px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 16px;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+        }
+        .login-box {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+        }
+        .login-box h2 {
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .btn {
+            background-color: #8fd3ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #6cb8e8;
+        }
+        .separator {
+            margin: 20px 0;
+            text-align: center;
+            position: relative;
+        }
+        .separator::before,
+        .separator::after {
+            content: "";
+            position: absolute;
+            width: 40%;
+            height: 1px;
+            background-color: #ccc;
+            top: 50%;
+        }
+        .separator::before { left: 0; }
+        .separator::after { right: 0; }
+    </style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Login Panel</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="#">About</a>
+            <a href="#">Recent News</a>
+            <a href="#">How It Works</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <div class="login-box">
+            <h2>Admin Login</h2>
+            <form id="admin-form">
+                <input type="text" id="username" placeholder="Username" required />
+                <input type="password" id="password" placeholder="Password" required />
+                <button type="submit" class="btn" id="loginBtn">Login</button>
+                <button type="button" class="btn" id="registerBtn" style="margin-top: 10px;">Register</button>
+            </form>
+            
+
+            <div class="separator">OR</div>
+
+            <h2>Google Sign In</h2>
+            <div id="g_id_onload"
+                data-client_id="567891971421-vt9bv8ceifgll96r9me58vto7v6gkdr7.apps.googleusercontent.com"
+                data-login_uri="http://127.0.0.1:5000/login"
+                data-auto_prompt="false">
+            </div>
+            <div id="g_id_signin"
+                data-type="standard"
+                data-size="large"
+                data-theme="outline"
+                data-text="sign_in_with"
+                data-shape="rectangular"
+                data-logo_alignment="left">
+            </div>
+        </div>
+    </div>
+
+    <script>
+      
+            // Admin login & register logic
+            document.getElementById("admin-form").addEventListener("submit", function(event) {
+                event.preventDefault();
+                const username = document.getElementById("username").value;
+                const password = document.getElementById("password").value;
+        
+                fetch('/admin-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, action: 'login' })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = "/admin-dashboard";
+                    } else {
+                        alert("Invalid login.");
+                    }
+                });
+            });
+        
+            document.getElementById("registerBtn").addEventListener("click", function() {
+                const username = document.getElementById("username").value;
+                const password = document.getElementById("password").value;
+        
+                fetch('/admin-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, action: 'register' })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert("Registered successfully! You can now login.");
+                    } else {
+                        alert("Registration failed: " + data.message);
+                    }
+                });
+            });
+      
+        
+        // Google Sign-In callback
+        function handleCredentialResponse(response) {
+            const id_token = response.credential;
+            
+    console.log("ID Token:", id_token);
+            fetch('/oauth2callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: id_token })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    window.location.href = "/";
+                } else {
+                    alert("Google login failed.");
+                }
+            })
+            .catch(error => console.error('Google Sign-In Error:', error));
+        }
+
+        // Initialize Google Sign-In
+        window.onload = function () {
+            google.accounts.id.initialize({
+                client_id: "567891971421-vt9bv8ceifgll96r9me58vto7v6gkdr7.apps.googleusercontent.com",
+                callback: handleCredentialResponse
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("g_id_signin"),
+                { theme: "outline", size: "large" }
+            );
+        };
+    </script>
+</body>
+</html>

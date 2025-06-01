@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sports News</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f5f5f5; }
+
+    .ticker-container {
+      overflow: hidden;
+      position: relative;
+      white-space: nowrap;
+      background-color: #003366;
+      color: #fff;
+    }
+
+    .ticker {
+      display: inline-block;
+      padding-left: 100%;
+      animation: ticker-scroll 25s linear infinite;
+    }
+
+    .ticker-list {
+      display: flex;
+      list-style: none;
+    }
+
+    .ticker-item {
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    @keyframes ticker-scroll {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .dark-mode {
+        background-color: #121212 !important;
+        color: #ffffff !important;
+    }
+    .dark-mode .card {
+        background-color: #1e1e1e;
+        border: 1px solid #333;
+        color:#fff;
+    }
+    .dark-mode .card-footer text-muted  {
+        background-color: #1e1e1e;
+        border: 1px solid #333;
+        color:#fff;
+    }
+    .dark-mode .form-control, 
+    .dark-mode .form-select, 
+    .dark-mode .btn-primary {
+        background-color: #333;
+        color: #fff;
+        border-color: #555;
+    }
+
+   
+
+    #loading-spinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+<div id="loading-spinner" class="spinner-border text-primary" role="status">
+  <span class="visually-hidden">Loading...</span>
+</div>
+
+<div id="main-content" style="display: none;">
+
+  <div class="ticker-container py-2 px-4 mb-4">
+    <div class="ticker">
+      <ul class="ticker-list m-0 p-0">
+        {% for headline in headlines %}
+          <li class="ticker-item d-inline-block me-5">{{ headline }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="text-center flex-grow-1">Sports News</h1>
+      <button class="btn btn-outline-dark ms-3" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    </div>
+
+    <input type="text" id="search-bar" class="form-control mb-3" placeholder="Search for sports news..." oninput="filterNews()">
+
+    <div class="mb-3 d-flex gap-3 flex-wrap">
+      <select id="categoryDropdown" class="form-select w-auto" onchange="filterCategoryDropdown()">
+        <option value="">All Sports</option>
+        <option value="football">Football</option>
+        <option value="cricket">Cricket</option>
+        <option value="basketball">Basketball</option>
+        <option value="tennis">Tennis</option>
+        <option value="olympics">Olympics</option>
+      </select>
+
+      <select id="sort-news" class="form-select w-auto" onchange="sortNews()">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+      </select>
+    </div>
+
+    <div id="news-container" class="row">
+      {% if sports_articles %}
+        {% for article in sports_articles %}
+          <div class="col-md-4 mb-4 news-card">
+            <div class="card h-100">
+              <img src="{{ article.image_url }}" class="card-img-top" alt="News Image" >
+              <div class="card-body">
+                <h5 class="card-title">{{ article.title }}</h5>
+                <p class="card-text">{{ article.description }}</p>
+                <a href="{{ article.url }}" class="btn btn-primary" target="_blank">Read More</a>
+              </div>
+              <div class="card-footer text-muted">
+                <span class="card-date">{{ article.published_at }}</span> | {{ article.source }}
+              </div>
+              <button class="btn btn-warning mt-2"
+                        data-image-url="{{ article.image_url }}"
+                        data-article-id="{{ article.id }}"
+                        data-title="{{ article.title }}"
+                        data-description="{{ article.description }}"
+                        data-image-url="{{ article.image_url }}"
+                        data-published-at="{{ article.published_at }}"
+                        data-url="{{ article.url }}"
+                        data-category="Sports">
+                        Save to Favorites
+                    </button>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>No sports news available right now.</p>
+      {% endif %}
+    </div>
+
+    <div class="text-center mt-4">
+      <button class="btn btn-success" id="load-more-btn" onclick="loadMoreNews()">Load More</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentArticleCount = 5;
+
+  function showArticles(count) {
+    const cards = document.getElementsByClassName("news-card");
+    for (let i = 0; i < cards.length; i++) {
+      cards[i].style.display = i < count ? "block" : "none";
+    }
+    if (count >= cards.length) {
+      document.getElementById("load-more-btn").style.display = "none";
+    }
+  }
+
+  function loadMoreNews() {
+    currentArticleCount += 5;
+    showArticles(currentArticleCount);
+  }
+
+  function filterNews() {
+    const input = document.getElementById("search-bar").value.toLowerCase();
+    const cards = document.getElementsByClassName("news-card");
+    Array.from(cards).forEach(card => {
+      const title = card.querySelector(".card-title").innerText.toLowerCase();
+      const desc = card.querySelector(".card-text").innerText.toLowerCase();
+      card.style.display = title.includes(input) || desc.includes(input) ? "block" : "none";
+    });
+  }
+
+  function filterCategoryDropdown() {
+    const selected = document.getElementById("categoryDropdown").value.toLowerCase();
+    const cards = document.getElementsByClassName("news-card");
+    Array.from(cards).forEach(card => {
+      const desc = card.querySelector(".card-text").innerText.toLowerCase();
+      card.style.display = selected === "" || desc.includes(selected) ? "block" : "none";
+    });
+  }
+
+  function sortNews() {
+    const option = document.getElementById("sort-news").value;
+    const container = document.getElementById("news-container");
+    const cards = Array.from(container.getElementsByClassName("news-card"));
+    cards.sort((a, b) => {
+      const dateA = new Date(a.querySelector(".card-date").innerText);
+      const dateB = new Date(b.querySelector(".card-date").innerText);
+      return option === "newest" ? dateB - dateA : dateA - dateB;
+    });
+    cards.forEach(card => container.appendChild(card));
+  }
+
+  function toggleDarkMode() {
+    document.body.classList.toggle("dark-mode");
+  }
+
+  window.onload = function () {
+    document.getElementById("loading-spinner").style.display = "block";
+    setTimeout(() => {
+      document.getElementById("loading-spinner").style.display = "none";
+      document.getElementById("main-content").style.display = "block";
+      showArticles(currentArticleCount);
+    }, 800);
+  };
+
+
+    document.addEventListener('click', function(event) {
+        // Check if the clicked element is an "Add to Favorites" button
+        if (event.target && event.target.classList.contains('btn-warning')) {
+            // Get all necessary attributes from the button
+            const articleId = event.target.getAttribute('data-article-id');
+            const title = event.target.getAttribute('data-title');
+            const description = event.target.getAttribute('data-description');
+            const imageUrl = event.target.getAttribute('data-image-url');  // Article image URL
+            const publishedAt = event.target.getAttribute('data-published-at');  // Published date
+            const url = event.target.getAttribute('data-url');  // Article URL
+            const category = event.target.getAttribute('data-category');  // Category (e.g., "Sports")
+    
+            // Call saveToFavorites with the collected data
+            saveToFavorites(articleId, title, description, imageUrl, publishedAt, url, category);
+        }
+    });
+    
+    function saveToFavorites(articleId, title, description, imageUrl, publishedAt, url, category) {
+        fetch('/save-favorite', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                article_id: articleId,
+                title: title, 
+                description: description,
+                image_url: imageUrl,
+                published_at: publishedAt,
+                url: url,
+                category: category
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                alert("Saved to Favorites!");
+            } else {
+                alert("Failed to save.");
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+    }
+    </script>
+    
+
+
+</body>
+</html>
